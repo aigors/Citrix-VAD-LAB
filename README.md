@@ -50,43 +50,51 @@ Deploys the following:
 - Need SQL ISO contents copied to accessible share via Ansible account (eg \\\mynas\isos\Microsoft\SQL\en_sql_server_2017_standard_x64_dvd_11294407)
     - I used SQL 2017 but other versions should work
 - DHCP enabled network
-- vCenter access and rights capable of deploying machines
-- (optional for remote state) [Terraform Cloud](https://app.terraform.io/signup/account) account created and API key for remote state.
+- vCenter Server 8.0 (ESXi 8.0 hosts) and rights capable of deploying machines
+    - Tested target: vSphere 8.0 U1/U2/U3. vSphere 7 still works with the default settings
+- (optional for remote state) [HCP Terraform](https://app.terraform.io/signup/account) account created and API key for remote state.
 
 ### Deploy machine
 I used [Ubuntu WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to deploy from
 
 1. [Ansible installed](https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-ubuntu-18-04)
    - Install **pywinrm** `pip install pywinrm` and `pip install pywinrm[credssp]`
-2. [Terraform installed](https://askubuntu.com/questions/983351/how-to-install-terraform-in-ubuntu)
-3. [Terraform-Inventory](https://github.com/adammck/terraform-inventory/releases) installed in path.  This is used for the Ansible inventory
+2. [Terraform >= 1.5 installed](https://developer.hashicorp.com/terraform/install)
+    - Uses the [vmware/vsphere](https://registry.terraform.io/providers/vmware/vsphere/latest) provider `>= 2.10, < 3.0`
+3. [Terraform-Inventory](https://github.com/adammck/terraform-inventory/releases) **v0.10 or later** (needed for Terraform >= 0.12 state) installed in path.  This is used for the Ansible inventory
     - I copied to */usr/bin/*
 4. (If using remote state)[Configure Access for the Terraform CLI](https://www.terraform.io/docs/cloud/free/index.html#configure-access-for-the-terraform-cli)
 5. This REPO cloned down
 
 ### vCenter Windows Server Template
     
-1. I used Windows Server 2019 but I assume 2016 should also work.
+1. Windows Server 2022 recommended (2019 also works). On vSphere 8 build the template with
+    - Virtual hardware version 20 (vSphere 8.0) or 21 (vSphere 8.0 U2+)
+    - EFI firmware (the clones automatically inherit the template firmware)
+    - Current VMware Tools (required for guest customization / domain join)
+    - VMXNET3 NIC and PVSCSI or LSI Logic SAS controller (inherited from the template)
 2. WinRM needs to be configured and **CredSSP** enabled
     - Ansible provides a great script to enable quickly https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1
     - Run manually `Enable-WSManCredSSP -Role Server -Force`
 3. I use linked clones to quickly deploy.  In order for this to work the template needs to be converted to a VM with a **single snapshot** created.
+4. (Optional) vSphere 8 security features, set in **lab.tfvars**
+    - `vm_efi_secure_boot = true` enables Secure Boot (EFI templates only)
+    - `vm_vtpm = true` adds a vTPM 2.0. Requires a key provider in vCenter (e.g. the built-in Native Key Provider)
+    - `vm_hardware_version = 20|21` upgrades the clones' virtual hardware
 
 ## Getting Started
 
 ### Terraform
 1. From the *terraform* directory copy **lab.tfvars.sample** to **lab.tfvars**
 2. Adjust variables to reflect vCenter environment
-3. Review **main.tf** and adjust any VM resources if needed
-4. (If using remote cloud state) At the bottom of **main.tf** uncomment the *terraform* section and edit the *organization* and *workspaces* fields
+3. Review **variables.tf** and adjust `vm_sizing` / `vda_count` if needed
+4. (If using remote cloud state) In **versions.tf** uncomment the *cloud* block and edit the *organization* and *workspaces* fields
 ```
-terraform {
-   backend "remote" {
-     organization = "TechDrabble"
-     workspaces {
-       name = "cvad-lab"
-     }
-   }
+cloud {
+  organization = "TechDrabble"
+  workspaces {
+    name = "cvad-lab"
+  }
 }
 ```
 5. run `terraform init` to install needed provider
