@@ -1,19 +1,25 @@
-
-#vsphere connetion info
+#vCenter 8 connection info
 vsphere_server     = "myvcenter.mydomain.local"
-vsphere_user       = "myadmin@mydomain.local"
+vsphere_user       = "myadmin@vsphere.local"
 vsphere_password   = "supersecret"
 vsphere_datacenter = "mydatacenter"
 vsphere_datastore  = "mydatastore"
 #Resource Pool (If no resource pool place in CLUSTER/Resources format)
-vsphere_rp           = "LAB-CLUSTER/Resources"
-vsphere_template     = "Win2019Datacenter_Template_GUI"
-#DHCP Network
-vsphere_network      = "VLAN2"
+vsphere_rp       = "LAB-CLUSTER/Resources"
+vsphere_template = "Win2022Datacenter_Template_GUI"
+#DHCP Network (standard portgroup or distributed portgroup name)
+vsphere_network = "VLAN2"
 #Use linked clones.(Requires a single snapshot on the VM)
 vsphere_linkedclones = true
-#https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912391(v=winembedded.11)?redirectedfrom=MSDN
-vsphere_timezone = 020
+#https://learn.microsoft.com/en-us/previous-versions/windows/embedded/ms912391(v=winembedded.11)
+#20 = Central Standard Time, 110 = W. Europe Standard Time
+vsphere_timezone = 20
+
+#vSphere 8 hardware options (all optional)
+#vm_hardware_version = 20    #20 = vSphere 8.0, 21 = vSphere 8.0 U2+
+#vm_efi_secure_boot  = true  #only applied to EFI templates
+#vm_vtpm             = true  #needs EFI + a key provider configured in vCenter
+#vsphere_customize_timeout = 30
 
 #VM naming
 #Prefix
@@ -28,3 +34,4 @@ vm_sql = "sql-ctx-lab-01"
 domain_user     = "mydomainadmin"
 domain_password = "supersecret"
 domain          = "mydomain.local"
+#domain_ou      = "OU=Citrix,DC=mydomain,DC=local"

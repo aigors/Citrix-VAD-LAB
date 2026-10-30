@@ -4,3 +4,5 @@ vars.yml
 .vscode
 vaultedsqlsvc.yml
 *.lic
+*.tfstate
+*.tfstate.*
